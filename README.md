@@ -2,58 +2,60 @@
 
 ## Overview
 
-This project is a RESTful API for an e-commerce platform built with Django and Django REST Framework. It provides endpoints for managing products, shopping carts, and orders.
+This project is a robust RESTful API for an e-commerce platform built with Django and Django REST Framework. It provides endpoints for managing products, shopping carts, and orders, with a focus on data integrity, error handling, and scalability.
 
 ## Features
 
 - Product catalog management
 - Shopping cart functionality
-- Order processing
+- Order processing with stock management
+- User authentication and authorization
 - RESTful API design
+- Comprehensive error handling and logging
 - Built with Django and Django REST Framework
 
-## Workflow
+## System Architecture
 
-The e-commerce API follows a typical e-commerce workflow, allowing users to browse products, add items to their cart, and place orders. Here's a detailed explanation of the workflow, illustrated by the sequence diagram below:
+The e-commerce API follows a typical e-commerce workflow, allowing users to browse products, manage their shopping cart, and place orders. The system's architecture and workflow are illustrated in the sequence diagram below:
 
-![E-commerce API Workflow](/img1.png)
+![E-commerce API Sequence Diagram](img2.png)
 
-1. **API Root Access**:
-   - The client starts by sending a GET request to the API root (`/api/`).
-   - The API responds with a list of available endpoints, allowing the client to discover the API's capabilities.
+### Key Workflow Steps:
 
-2. **Product Browsing**:
-   - The client sends a GET request to `/api/products/` to retrieve the list of available products.
-   - The API queries the database for product information.
-   - The database returns the product data to the API.
-   - The API sends the list of products back to the client.
+1. **Product Browsing**: 
+   - Users can retrieve a list of available products.
+   - The API fetches product data from the database and returns it to the client.
 
-3. **Adding to Cart**:
-   - When a user wants to add an item to their cart, the client sends a POST request to `/api/cart/`.
-   - The API processes this request and adds the item to the user's cart in the database.
-   - The database confirms that the item has been added.
-   - The API sends back the updated cart information to the client.
+2. **Cart Management**:
+   - Users can add products to their cart, specifying the quantity.
+   - The API checks product availability before adding to the cart.
+   - Users can view and update their cart contents.
 
-4. **Placing an Order**:
-   - To place an order, the client sends a POST request to `/api/orders/`.
-   - The API creates a new order in the database based on the items in the user's cart.
-   - As part of the order creation process, the API also clears the user's cart.
-   - The database confirms that the order has been created.
-   - The API sends the order details back to the client.
+3. **Order Placement**:
+   - Users can create an order based on their cart contents.
+   - The API performs the following steps atomically:
+     - Checks product availability
+     - Creates a new order
+     - Updates product stock
+     - Clears the user's cart
+   - An order confirmation is sent back to the client.
 
-5. **Viewing Orders**:
-   - The client can retrieve a list of orders by sending a GET request to `/api/orders/`.
-   - The API queries the database for the user's order history.
-   - The database returns the order data.
-   - The API sends the list of orders back to the client.
+4. **Order Management**:
+   - Users can view their order history.
+   - Admins can update order statuses (e.g., from 'processing' to 'shipped').
 
-This workflow allows for a seamless e-commerce experience, from browsing products to completing purchases. The API handles all the necessary data management and interactions with the database, providing a robust backend for an e-commerce application.
+5. **Error Handling**:
+   - The system includes comprehensive error handling for scenarios such as:
+     - Insufficient stock
+     - Invalid input data
+     - Authentication and authorization errors
 
-## Requirements
+## Technology Stack
 
 - Python 3.8+
 - Django 5.1.2
 - Django REST Framework 3.14.0
+- SQLite (can be easily switched to other databases for production)
 
 ## Installation
 
@@ -74,8 +76,9 @@ This workflow allows for a seamless e-commerce experience, from browsing product
    pip install -r requirements.txt
    ```
 
-4. Apply migrations:
+4. Set up the database:
    ```
+   python manage.py makemigrations
    python manage.py migrate
    ```
 
@@ -108,98 +111,48 @@ The API will be available at `http://localhost:8000/api/`.
 - List/Create: `GET`, `POST` `/api/orders/`
 - Retrieve/Update/Delete: `GET`, `PUT`, `PATCH`, `DELETE` `/api/orders/{id}/`
 
-## Usage
+## Authentication
 
-### Authentication
+This API uses token-based authentication. To authenticate:
 
-This API uses session-based authentication. To authenticate:
-
-1. Obtain a session token:
+1. Obtain a token:
    ```
-   curl -X POST http://localhost:8000/api-auth/login/ -d "username=yourusername&password=yourpassword"
+   curl -X POST http://localhost:8000/api-token-auth/ -d "username=yourusername&password=yourpassword"
    ```
 
-2. Include the session token in subsequent requests:
+2. Include the token in the Authorization header for subsequent requests:
    ```
-   curl -X GET http://localhost:8000/api/products/ -H "Authorization: Token YOUR_TOKEN_HERE"
+   curl -H "Authorization: Token YOUR_TOKEN_HERE" http://localhost:8000/api/products/
    ```
 
-### Examples
+## Usage Examples
 
 1. List all products:
    ```
-   curl -X GET http://localhost:8000/api/products/
+   curl -H "Authorization: Token YOUR_TOKEN_HERE" http://localhost:8000/api/products/
    ```
 
-2. Create a new product:
+2. Add an item to cart:
    ```
-   curl -X POST http://localhost:8000/api/products/ -H "Content-Type: application/json" -d '{"name":"New Product", "description":"Product description", "price":"19.99", "stock":100}'
-   ```
-
-3. Add an item to cart:
-   ```
-   curl -X POST http://localhost:8000/api/cart/ -H "Content-Type: application/json" -d '{"product": 1, "quantity": 2}'
+   curl -X POST http://localhost:8000/api/cart/ -H "Authorization: Token YOUR_TOKEN_HERE" -H "Content-Type: application/json" -d '{"product_id": 1, "quantity": 2}'
    ```
 
-4. Create an order:
+3. Place an order:
    ```
-   curl -X POST http://localhost:8000/api/orders/ -H "Content-Type: application/json" -d '{}'
+   curl -X POST http://localhost:8000/api/orders/ -H "Authorization: Token YOUR_TOKEN_HERE" -H "Content-Type: application/json" -d '{}'
    ```
 
-## Project Structure
+## Error Handling
 
-```
-django_ecommerce_api/
-├── django_ecommerce_api/
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   ├── views.py
-│   └── wsgi.py
-├── products/
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── serializers.py
-│   ├── urls.py
-│   └── views.py
-├── cart/
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── serializers.py
-│   ├── urls.py
-│   └── views.py
-├── orders/
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── serializers.py
-│   ├── urls.py
-│   └── views.py
-├── manage.py
-├── requirements.txt
-├── README.md
-└── img1.png
-```
+The API uses custom exception handling to provide clear and consistent error responses. Common HTTP status codes are used (e.g., 400 for bad requests, 404 for not found, 403 for forbidden actions).
 
-## Development
+## Logging
 
-To contribute to this project:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature-branch`)
-3. Make your changes and commit (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin feature-branch`)
-5. Create a new Pull Request
+The project includes a logging configuration that logs errors and unexpected exceptions to a file (`debug.log`). This aids in debugging and monitoring the application.
 
 ## Testing
 
-Run the test suite:
+To run the test suite:
 
 ```
 python manage.py test
@@ -207,13 +160,18 @@ python manage.py test
 
 ## Deployment
 
-For production deployment, make sure to:
+For production deployment:
 
 1. Set `DEBUG = False` in `settings.py`
-2. Use a production-grade server like Gunicorn
-3. Set up a reverse proxy with Nginx
-4. Use environment variables for sensitive information
-5. Set up proper security measures (HTTPS, secure cookies, etc.)
+2. Use environment variables for sensitive information (e.g., `SECRET_KEY`, `DATABASE_URL`)
+3. Use a production-grade server like Gunicorn
+4. Set up a reverse proxy with Nginx
+5. Use a production database (e.g., PostgreSQL)
+6. Implement proper security measures (HTTPS, secure cookies, etc.)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
