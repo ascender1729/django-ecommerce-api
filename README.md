@@ -61,7 +61,7 @@ The e-commerce API follows a typical e-commerce workflow, allowing users to brow
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/django-ecommerce-api.git
+   git clone https://github.com/ascender1729/django-ecommerce-api.git
    cd django-ecommerce-api
    ```
 
